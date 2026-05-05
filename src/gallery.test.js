@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getAdjacentSlideIndex, getPreferredTheme, normalizeSlides } from './gallery.js';
+import {
+  LIGHTBOX_CONTENT_HIDE_DELAY_MS,
+  getAdjacentSlideIndex,
+  getPreferredTheme,
+  normalizeSlides,
+} from './gallery.js';
 
 describe('gallery behavior', () => {
   it('cycles slide navigation in both directions', () => {
@@ -37,5 +42,10 @@ describe('gallery behavior', () => {
   it('uses the system theme preference', () => {
     expect(getPreferredTheme({ systemPrefersDark: true })).toBe('dark');
     expect(getPreferredTheme({ systemPrefersDark: false })).toBe('light');
+  });
+
+  it('keeps fullscreen slide titles visible briefly after interaction', () => {
+    expect(LIGHTBOX_CONTENT_HIDE_DELAY_MS).toBeGreaterThanOrEqual(1000);
+    expect(LIGHTBOX_CONTENT_HIDE_DELAY_MS).toBeLessThanOrEqual(2000);
   });
 });

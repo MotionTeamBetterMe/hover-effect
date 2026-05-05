@@ -345,7 +345,17 @@ button {
   padding: clamp(18px, 4vw, 42px) clamp(70px, 8vw, 112px) 64px clamp(22px, 5vw, 64px);
   background: transparent;
   color: #ffffff;
+  opacity: 0;
   pointer-events: none;
+  transform: translateY(-8px);
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+
+.lightbox.is-content-visible .lightbox__content {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .lightbox__tag {

@@ -1,3 +1,5 @@
+export const LIGHTBOX_CONTENT_HIDE_DELAY_MS = 1800;
+
 export function getAdjacentSlideIndex(currentIndex, direction, totalSlides) {
   if (!Number.isInteger(totalSlides) || totalSlides < 1) {
     return 0;
@@ -48,6 +50,7 @@ export function initGallery(root, rawSlides) {
     activeIndex: 0,
     lastFocused: null,
     closeTimer: 0,
+    contentTimer: 0,
     theme: getPreferredTheme({
       systemPrefersDark: Boolean(themeMediaQuery?.matches),
     }),
@@ -90,6 +93,7 @@ export function initGallery(root, rawSlides) {
     setLightboxOrigin(lightbox.overlay, trigger);
 
     updateLightbox(lightbox, slides[state.activeIndex]);
+    revealLightboxContent();
     lightbox.overlay.classList.remove('is-closing');
     lightbox.overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('lightbox-open');
@@ -107,6 +111,7 @@ export function initGallery(root, rawSlides) {
 
     lightbox.overlay.classList.remove('is-open');
     lightbox.overlay.classList.add('is-closing');
+    hideLightboxContent();
     document.body.classList.remove('lightbox-open');
 
     state.closeTimer = window.setTimeout(() => {
@@ -122,6 +127,18 @@ export function initGallery(root, rawSlides) {
   function showAdjacentSlide(direction) {
     state.activeIndex = getAdjacentSlideIndex(state.activeIndex, direction, slides.length);
     updateLightbox(lightbox, slides[state.activeIndex]);
+    revealLightboxContent();
+  }
+
+  function revealLightboxContent() {
+    window.clearTimeout(state.contentTimer);
+    lightbox.overlay.classList.add('is-content-visible');
+    state.contentTimer = window.setTimeout(hideLightboxContent, LIGHTBOX_CONTENT_HIDE_DELAY_MS);
+  }
+
+  function hideLightboxContent() {
+    window.clearTimeout(state.contentTimer);
+    lightbox.overlay.classList.remove('is-content-visible');
   }
 
   function handleKeydown(event) {
@@ -153,6 +170,8 @@ export function initGallery(root, rawSlides) {
   lightbox.image.addEventListener('click', closeSlide);
   lightbox.previousButton.addEventListener('click', () => showAdjacentSlide(-1));
   lightbox.nextButton.addEventListener('click', () => showAdjacentSlide(1));
+  lightbox.overlay.addEventListener('pointermove', revealLightboxContent);
+  lightbox.overlay.addEventListener('focusin', revealLightboxContent);
   lightbox.overlay.addEventListener('click', (event) => {
     if (event.target === lightbox.overlay) {
       closeSlide();
@@ -165,6 +184,7 @@ export function initGallery(root, rawSlides) {
     document.removeEventListener('keydown', handleKeydown);
     themeMediaQuery?.removeEventListener?.('change', handleSystemThemeChange);
     window.clearTimeout(state.closeTimer);
+    window.clearTimeout(state.contentTimer);
     document.body.classList.remove('lightbox-open');
     root.replaceChildren();
   };
