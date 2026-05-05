@@ -19,13 +19,8 @@ export function normalizeSlides(rawSlides) {
   return rawSlides.map((slide, index) => {
     const slideNumber = index + 1;
 
-    if (
-      !slide ||
-      !hasText(slide.title) ||
-      !hasText(slide.description) ||
-      !hasText(slide.image)
-    ) {
-      throw new Error(`Slide ${slideNumber} must include title, description, and image.`);
+    if (!slide || !hasText(slide.title) || !hasText(slide.image)) {
+      throw new Error(`Slide ${slideNumber} must include title and image.`);
     }
 
     const title = slide.title.trim();
@@ -34,7 +29,7 @@ export function normalizeSlides(rawSlides) {
     return {
       id,
       title,
-      description: slide.description.trim(),
+      description: hasText(slide.description) ? slide.description.trim() : '',
       image: slide.image.trim(),
       tag: hasText(slide.tag) ? slide.tag.trim() : '',
       link: hasText(slide.link) ? slide.link.trim() : '',
@@ -180,7 +175,13 @@ function createSlideCard(slide, index, onOpen) {
   cta.className = 'slide-card__cta';
   cta.textContent = 'View slide';
 
-  body.append(title, description, cta);
+  body.append(title);
+
+  if (slide.description) {
+    body.append(description);
+  }
+
+  body.append(cta);
   button.append(media, body);
   button.addEventListener('click', () => onOpen(index));
 
@@ -194,7 +195,6 @@ function createLightbox() {
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-hidden', 'true');
   overlay.setAttribute('aria-labelledby', 'lightbox-title');
-  overlay.setAttribute('aria-describedby', 'lightbox-description');
 
   const closeButton = document.createElement('button');
   closeButton.className = 'lightbox__close';
@@ -262,7 +262,14 @@ function createLightbox() {
 function updateLightbox(lightbox, slide) {
   lightbox.image.src = slide.image;
   lightbox.title.textContent = slide.title;
+  lightbox.description.hidden = !slide.description;
   lightbox.description.textContent = slide.description;
+
+  if (slide.description) {
+    lightbox.overlay.setAttribute('aria-describedby', 'lightbox-description');
+  } else {
+    lightbox.overlay.removeAttribute('aria-describedby');
+  }
 
   lightbox.tag.hidden = !slide.tag;
   lightbox.tag.textContent = slide.tag;

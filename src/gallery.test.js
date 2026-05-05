@@ -12,7 +12,6 @@ describe('gallery behavior', () => {
     const slides = normalizeSlides([
       {
         title: 'Strategy',
-        description: 'A concise slide description.',
         image: '/slides/strategy.jpg',
       },
     ]);
@@ -21,7 +20,7 @@ describe('gallery behavior', () => {
       {
         id: 'strategy',
         title: 'Strategy',
-        description: 'A concise slide description.',
+        description: '',
         image: '/slides/strategy.jpg',
         tag: '',
         link: '',
@@ -31,7 +30,7 @@ describe('gallery behavior', () => {
 
   it('rejects slides that are missing required editable fields', () => {
     expect(() => normalizeSlides([{ title: 'Missing image' }])).toThrow(
-      'Slide 1 must include title, description, and image.',
+      'Slide 1 must include title and image.',
     );
   });
 });

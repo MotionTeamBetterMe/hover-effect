@@ -1,84 +1,94 @@
 # Notion Slide Gallery Widget
 
-Статичний адаптивний віджет галереї слайдів для вставки в Notion через `/embed`. Проєкт зроблено на Vite без бекенду та без важких UI-бібліотек.
+Static responsive slide gallery for Notion `/embed`, hosted on GitHub Pages.
 
-## Локальний запуск
+The production widget can read slides from a private Notion database during GitHub Actions builds. The final GitHub Pages site is public so Notion can embed it, but the Notion database and API token stay private.
+
+## Local Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-Після запуску відкрий локальний URL, який покаже Vite, зазвичай:
+Local URL is usually:
 
 ```text
 http://localhost:5173/
 ```
 
-## Перевірка і збірка
+## Checks
 
 ```bash
 npm test
 npm run build
 ```
 
-Зібрані файли зʼявляться в папці `dist/`.
+## Notion Database Setup
 
-## Як змінити слайди
+Create a Notion database named `Slides` with these properties:
 
-Усі дані слайдів редагуються в одному файлі:
+| Property | Type | Required |
+| --- | --- | --- |
+| `Title` | Title | Yes |
+| `Image` | URL or Files & media | Yes |
+| `Order` | Number | No |
+| `Published` | Checkbox | No |
+
+If `Published` exists and is unchecked, the slide is skipped. If `Order` exists, lower numbers appear first.
+
+## Notion Integration
+
+1. Open [Notion integrations](https://www.notion.so/my-integrations).
+2. Create an internal connection.
+3. Copy the internal integration secret.
+4. Open the `Slides` database in Notion.
+5. Use `...` -> `Connections` and add the integration to the database.
+6. Copy the database URL and extract the 32-character database ID.
+
+## GitHub Secrets
+
+Add these repository secrets:
 
 ```text
-src/slides.js
+NOTION_TOKEN
+NOTION_DATABASE_ID
 ```
 
-Формат одного слайда:
+Repository secrets page:
 
-```js
-{
-  title: 'Slide title',
-  description: 'Short slide description.',
-  image: 'https://example.com/image.jpg',
-  tag: 'Optional tag',
-  link: 'https://example.com'
-}
+```text
+https://github.com/MotionTeamBetterMe/hover-effect/settings/secrets/actions
 ```
 
-Обовʼязкові поля: `title`, `description`, `image`.
-Опційні поля: `tag`, `link`.
+## Deployment
 
-## GitHub Pages deployment
-
-У проєкті вже є workflow:
+The repo has two workflows:
 
 ```text
 .github/workflows/deploy.yml
+.github/workflows/sync-notion.yml
 ```
 
-Щоб задеплоїти:
+`Deploy to GitHub Pages` runs on push to `main`. If Notion secrets exist, it syncs slides before build.
 
-1. Створи GitHub repository та запуш цей проєкт у гілку `main`.
-2. У GitHub відкрий `Settings` -> `Pages`.
-3. У `Build and deployment` вибери `GitHub Actions`.
-4. Запусти workflow вручну або зроби push у `main`.
+`Sync Notion Slides` runs manually and every 15 minutes. It reads Notion, builds the site, and deploys to GitHub Pages.
 
-Після успішного деплою URL буде у форматі:
+Live URL:
 
 ```text
-https://<github-username>.github.io/<repository-name>/
+https://motionteambetterme.github.io/hover-effect/
 ```
 
-Якщо репозиторій називатиметься `Nadi`, URL буде:
+## Notion Embed
+
+1. In Notion, type `/embed`.
+2. Paste:
 
 ```text
-https://<github-username>.github.io/Nadi/
+https://motionteambetterme.github.io/hover-effect/
 ```
 
-## Вставка в Notion
+3. Resize the embed block height as needed.
 
-1. Скопіюй GitHub Pages URL.
-2. У Notion введи `/embed`.
-3. Встав URL.
-4. За потреби зміни висоту embed-блоку, щоб галерея мала достатньо простору.
-
-Overlay відкривається через `position: fixed` всередині iframe, тому він займає весь доступний viewport embed-блоку Notion без залежності від Fullscreen API.
+The overlay uses the iframe viewport, not the browser Fullscreen API.
