@@ -141,6 +141,12 @@ async function main() {
   const currentFile = fileURLToPath(import.meta.url);
   const projectRoot = resolve(dirname(currentFile), '..');
   await writeSlidesModule(slides, resolve(projectRoot, 'src/slides.js'));
+  await writeSlidesJson(slides, resolve(projectRoot, 'public/slides.json'));
+  console.log(`Synced ${slides.length} slide(s) from Notion.`);
+}
+
+export async function writeSlidesJson(slides, outputPath) {
+  await writeFile(outputPath, `${JSON.stringify(slides, null, 2)}\n`, 'utf8');
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
