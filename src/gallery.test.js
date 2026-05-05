@@ -34,10 +34,8 @@ describe('gallery behavior', () => {
     );
   });
 
-  it('prefers a saved theme before falling back to system theme', () => {
-    expect(getPreferredTheme({ savedTheme: 'dark', systemPrefersDark: false })).toBe('dark');
-    expect(getPreferredTheme({ savedTheme: 'light', systemPrefersDark: true })).toBe('light');
-    expect(getPreferredTheme({ savedTheme: null, systemPrefersDark: true })).toBe('dark');
-    expect(getPreferredTheme({ savedTheme: null, systemPrefersDark: false })).toBe('light');
+  it('uses the system theme preference', () => {
+    expect(getPreferredTheme({ systemPrefersDark: true })).toBe('dark');
+    expect(getPreferredTheme({ systemPrefersDark: false })).toBe('light');
   });
 });
