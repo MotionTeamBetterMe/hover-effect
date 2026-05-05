@@ -42,6 +42,7 @@ export function initGallery(root, rawSlides) {
   const state = {
     activeIndex: 0,
     lastFocused: null,
+    closeTimer: 0,
   };
 
   root.replaceChildren();
@@ -63,28 +64,41 @@ export function initGallery(root, rawSlides) {
   shell.append(grid, lightbox.overlay);
   root.append(shell);
 
-  function openSlide(index) {
+  function openSlide(index, trigger) {
     state.activeIndex = index;
     state.lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    window.clearTimeout(state.closeTimer);
+
+    setLightboxOrigin(lightbox.overlay, trigger);
 
     updateLightbox(lightbox, slides[state.activeIndex]);
-    lightbox.overlay.classList.add('is-open');
+    lightbox.overlay.classList.remove('is-closing');
     lightbox.overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('lightbox-open');
 
     window.requestAnimationFrame(() => {
+      lightbox.overlay.classList.add('is-open');
       lightbox.closeButton.focus({ preventScroll: true });
     });
   }
 
   function closeSlide() {
+    if (!lightbox.overlay.classList.contains('is-open')) {
+      return;
+    }
+
     lightbox.overlay.classList.remove('is-open');
-    lightbox.overlay.setAttribute('aria-hidden', 'true');
+    lightbox.overlay.classList.add('is-closing');
     document.body.classList.remove('lightbox-open');
 
-    if (state.lastFocused && document.contains(state.lastFocused)) {
-      state.lastFocused.focus({ preventScroll: true });
-    }
+    state.closeTimer = window.setTimeout(() => {
+      lightbox.overlay.classList.remove('is-closing');
+      lightbox.overlay.setAttribute('aria-hidden', 'true');
+
+      if (state.lastFocused && document.contains(state.lastFocused)) {
+        state.lastFocused.focus({ preventScroll: true });
+      }
+    }, 260);
   }
 
   function showAdjacentSlide(direction) {
@@ -118,6 +132,7 @@ export function initGallery(root, rawSlides) {
   }
 
   lightbox.closeButton.addEventListener('click', closeSlide);
+  lightbox.image.addEventListener('click', closeSlide);
   lightbox.previousButton.addEventListener('click', () => showAdjacentSlide(-1));
   lightbox.nextButton.addEventListener('click', () => showAdjacentSlide(1));
   lightbox.overlay.addEventListener('click', (event) => {
@@ -129,6 +144,7 @@ export function initGallery(root, rawSlides) {
 
   return () => {
     document.removeEventListener('keydown', handleKeydown);
+    window.clearTimeout(state.closeTimer);
     document.body.classList.remove('lightbox-open');
     root.replaceChildren();
   };
@@ -183,7 +199,7 @@ function createSlideCard(slide, index, onOpen) {
 
   body.append(cta);
   button.append(media, body);
-  button.addEventListener('click', () => onOpen(index));
+  button.addEventListener('click', () => onOpen(index, button));
 
   return button;
 }
@@ -280,6 +296,21 @@ function updateLightbox(lightbox, slide) {
   } else {
     lightbox.link.removeAttribute('href');
   }
+}
+
+function setLightboxOrigin(overlay, trigger) {
+  if (!trigger || typeof trigger.getBoundingClientRect !== 'function') {
+    overlay.style.setProperty('--origin-x', '50%');
+    overlay.style.setProperty('--origin-y', '50%');
+    return;
+  }
+
+  const rect = trigger.getBoundingClientRect();
+  const originX = rect.left + rect.width / 2;
+  const originY = rect.top + rect.height / 2;
+
+  overlay.style.setProperty('--origin-x', `${originX}px`);
+  overlay.style.setProperty('--origin-y', `${originY}px`);
 }
 
 function trapFocus(event, container) {
