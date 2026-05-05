@@ -1,11 +1,24 @@
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #fbfbfa;
   color: #171717;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  --page-bg: #fbfbfa;
+  --page-wash: rgba(15, 118, 110, 0.06);
+  --focus-ring: #0f766e;
+  --toggle-bg: rgba(255, 255, 255, 0.92);
+  --toggle-border: rgba(23, 23, 23, 0.12);
+  --toggle-color: #171717;
+  --toggle-shadow: rgba(23, 23, 23, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    background: #111315;
+  }
 }
 
 * {
@@ -15,14 +28,14 @@
 html,
 body,
 #app {
-  min-height: 100%;
+  min-height: 100dvh;
 }
 
 body {
   margin: 0;
   background:
-    linear-gradient(180deg, rgba(15, 118, 110, 0.06), transparent 24rem),
-    #fbfbfa;
+    linear-gradient(180deg, var(--page-wash), transparent 24rem),
+    var(--page-bg);
 }
 
 button,
@@ -39,13 +52,101 @@ button {
 }
 
 .gallery-widget {
-  min-height: 100%;
+  min-height: 100dvh;
+  background:
+    linear-gradient(180deg, var(--page-wash), transparent 24rem),
+    var(--page-bg);
+  color: var(--toggle-color);
+}
+
+.gallery-widget[data-theme="dark"] {
+  color-scheme: dark;
+  --page-bg: #111315;
+  --page-wash: rgba(255, 255, 255, 0.04);
+  --focus-ring: #7dd3fc;
+  --toggle-bg: rgba(31, 35, 40, 0.92);
+  --toggle-border: rgba(255, 255, 255, 0.16);
+  --toggle-color: #f4f4f5;
+  --toggle-shadow: rgba(0, 0, 0, 0.24);
+}
+
+.gallery-widget[data-theme="light"] {
+  color-scheme: light;
+  --page-bg: #fbfbfa;
+  --page-wash: rgba(15, 118, 110, 0.06);
+  --focus-ring: #0f766e;
+  --toggle-bg: rgba(255, 255, 255, 0.92);
+  --toggle-border: rgba(23, 23, 23, 0.12);
+  --toggle-color: #171717;
+  --toggle-shadow: rgba(23, 23, 23, 0.12);
 }
 
 .widget-shell {
   width: min(100%, 1280px);
   margin: 0 auto;
   padding: 16px;
+}
+
+.widget-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 2.25rem;
+  padding: 0 12px;
+  border: 1px solid var(--toggle-border);
+  border-radius: 999px;
+  background: var(--toggle-bg);
+  color: var(--toggle-color);
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 750;
+  line-height: 1;
+  box-shadow: 0 8px 24px var(--toggle-shadow);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-1px);
+}
+
+.theme-toggle__icon {
+  position: relative;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.theme-toggle[data-theme="dark"] .theme-toggle__icon::after {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 0.82rem;
+  height: 0.82rem;
+  border-radius: 999px;
+  background: var(--toggle-bg);
+  content: "";
+}
+
+.theme-toggle[data-theme="light"] .theme-toggle__icon {
+  box-shadow:
+    0 -7px 0 -5px currentColor,
+    0 7px 0 -5px currentColor,
+    7px 0 0 -5px currentColor,
+    -7px 0 0 -5px currentColor,
+    5px 5px 0 -5px currentColor,
+    -5px -5px 0 -5px currentColor,
+    5px -5px 0 -5px currentColor,
+    -5px 5px 0 -5px currentColor;
 }
 
 .slide-grid {
@@ -76,8 +177,9 @@ button {
 
 .slide-card:focus-visible,
 .lightbox button:focus-visible,
-.lightbox__link:focus-visible {
-  outline: 3px solid #0f766e;
+.lightbox__link:focus-visible,
+.theme-toggle:focus-visible {
+  outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
 }
 

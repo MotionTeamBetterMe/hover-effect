@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getAdjacentSlideIndex, normalizeSlides } from './gallery.js';
+import { getAdjacentSlideIndex, getPreferredTheme, normalizeSlides } from './gallery.js';
 
 describe('gallery behavior', () => {
   it('cycles slide navigation in both directions', () => {
@@ -32,5 +32,12 @@ describe('gallery behavior', () => {
     expect(() => normalizeSlides([{ title: 'Missing image' }])).toThrow(
       'Slide 1 must include title and image.',
     );
+  });
+
+  it('prefers a saved theme before falling back to system theme', () => {
+    expect(getPreferredTheme({ savedTheme: 'dark', systemPrefersDark: false })).toBe('dark');
+    expect(getPreferredTheme({ savedTheme: 'light', systemPrefersDark: true })).toBe('light');
+    expect(getPreferredTheme({ savedTheme: null, systemPrefersDark: true })).toBe('dark');
+    expect(getPreferredTheme({ savedTheme: null, systemPrefersDark: false })).toBe('light');
   });
 });

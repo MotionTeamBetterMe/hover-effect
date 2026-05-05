@@ -37,19 +37,41 @@ export function normalizeSlides(rawSlides) {
   });
 }
 
+export function getPreferredTheme({ savedTheme, systemPrefersDark }) {
+  if (savedTheme === 'dark' || savedTheme === 'light') {
+    return savedTheme;
+  }
+
+  return systemPrefersDark ? 'dark' : 'light';
+}
+
 export function initGallery(root, rawSlides) {
   const slides = normalizeSlides(rawSlides);
+  const savedTheme = readSavedTheme();
+  const themeMediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)');
   const state = {
     activeIndex: 0,
     lastFocused: null,
     closeTimer: 0,
+    theme: getPreferredTheme({
+      savedTheme,
+      systemPrefersDark: Boolean(themeMediaQuery?.matches),
+    }),
+    userThemeSelected: Boolean(savedTheme),
   };
 
   root.replaceChildren();
   root.classList.add('gallery-widget');
+  applyTheme(root, state.theme);
 
   const shell = document.createElement('main');
   shell.className = 'widget-shell';
+
+  const toolbar = document.createElement('div');
+  toolbar.className = 'widget-toolbar';
+
+  const themeButton = createThemeButton(state.theme);
+  toolbar.append(themeButton);
 
   const grid = document.createElement('section');
   grid.className = 'slide-grid';
@@ -61,8 +83,25 @@ export function initGallery(root, rawSlides) {
 
   const lightbox = createLightbox();
 
-  shell.append(grid, lightbox.overlay);
+  shell.append(toolbar, grid, lightbox.overlay);
   root.append(shell);
+
+  function setTheme(theme, { persist }) {
+    state.theme = theme;
+    state.userThemeSelected = persist ? true : state.userThemeSelected;
+    applyTheme(root, state.theme);
+    updateThemeButton(themeButton, state.theme);
+
+    if (persist) {
+      window.localStorage?.setItem('gallery-theme', state.theme);
+    }
+  }
+
+  function handleSystemThemeChange(event) {
+    if (!state.userThemeSelected) {
+      setTheme(event.matches ? 'dark' : 'light', { persist: false });
+    }
+  }
 
   function openSlide(index, trigger) {
     state.activeIndex = index;
@@ -135,19 +174,67 @@ export function initGallery(root, rawSlides) {
   lightbox.image.addEventListener('click', closeSlide);
   lightbox.previousButton.addEventListener('click', () => showAdjacentSlide(-1));
   lightbox.nextButton.addEventListener('click', () => showAdjacentSlide(1));
+  themeButton.addEventListener('click', () => {
+    setTheme(state.theme === 'dark' ? 'light' : 'dark', { persist: true });
+  });
   lightbox.overlay.addEventListener('click', (event) => {
     if (event.target === lightbox.overlay) {
       closeSlide();
     }
   });
+  themeMediaQuery?.addEventListener?.('change', handleSystemThemeChange);
   document.addEventListener('keydown', handleKeydown);
 
   return () => {
     document.removeEventListener('keydown', handleKeydown);
+    themeMediaQuery?.removeEventListener?.('change', handleSystemThemeChange);
     window.clearTimeout(state.closeTimer);
     document.body.classList.remove('lightbox-open');
     root.replaceChildren();
   };
+}
+
+function createThemeButton(theme) {
+  const button = document.createElement('button');
+  button.className = 'theme-toggle';
+  button.type = 'button';
+
+  const icon = document.createElement('span');
+  icon.className = 'theme-toggle__icon';
+  icon.setAttribute('aria-hidden', 'true');
+
+  const label = document.createElement('span');
+  label.className = 'theme-toggle__label';
+
+  button.append(icon, label);
+  updateThemeButton(button, theme);
+
+  return button;
+}
+
+function updateThemeButton(button, theme) {
+  const label = button.querySelector('.theme-toggle__label');
+  const nextTheme = theme === 'dark' ? 'light' : 'dark';
+
+  button.dataset.theme = theme;
+  button.setAttribute('aria-label', `Switch to ${nextTheme} theme`);
+  button.title = `Switch to ${nextTheme} theme`;
+
+  if (label) {
+    label.textContent = theme === 'dark' ? 'Dark' : 'Light';
+  }
+}
+
+function applyTheme(root, theme) {
+  root.dataset.theme = theme;
+}
+
+function readSavedTheme() {
+  try {
+    return window.localStorage?.getItem('gallery-theme');
+  } catch {
+    return null;
+  }
 }
 
 function createSlideCard(slide, index, onOpen) {
