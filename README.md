@@ -8,9 +8,39 @@ Live URL:
 https://motionteambetterme.github.io/hover-effect/
 ```
 
+## Notion Sync
+
+The widget can read slides from a Notion database during GitHub Actions builds. The GitHub Pages URL stays public for Notion embed, but the Notion token and database stay private in GitHub Secrets.
+
+Required Notion database properties:
+
+| Property | Type | Required |
+| --- | --- | --- |
+| `Title` | Title | Yes |
+| `Image` | URL or Files & media | Yes |
+| `Order` | Number | No |
+| `Published` | Checkbox | No |
+
+If `Published` exists and is unchecked, the slide is skipped. If `Order` exists, lower numbers appear first.
+
+Required GitHub repository secrets:
+
+```text
+NOTION_TOKEN
+NOTION_DATABASE_ID
+```
+
+After both secrets are set, run:
+
+```text
+Actions -> Sync Notion Slides -> Run workflow
+```
+
+The sync workflow also runs every 15 minutes.
+
 ## Edit Slides
 
-Slides are edited in one file:
+Fallback slides are edited in one file:
 
 ```text
 src/slides.js
@@ -27,7 +57,7 @@ Each slide needs only:
 
 Use image URLs that open without login. Notion private file URLs are not reliable for a public embed.
 
-After editing `src/slides.js`, commit to `main`. GitHub Actions deploys the updated widget automatically.
+If Notion secrets are configured, production uses Notion data during deployment. If secrets are missing, production uses `src/slides.js`.
 
 ## Local Development
 
