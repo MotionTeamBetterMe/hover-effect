@@ -215,7 +215,12 @@ button {
   line-height: 1.05;
   overflow-wrap: anywhere;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  transform: translateY(-6px);
   backdrop-filter: blur(12px);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
 }
 
 .slide-card__description {
@@ -256,8 +261,10 @@ button {
 
 .slide-card:hover .slide-card__description,
 .slide-card:hover .slide-card__cta,
+.slide-card:hover .slide-card__title,
 .slide-card:focus-visible .slide-card__description,
-.slide-card:focus-visible .slide-card__cta {
+.slide-card:focus-visible .slide-card__cta,
+.slide-card:focus-visible .slide-card__title {
   opacity: 1;
   transform: translateY(0);
 }
@@ -334,9 +341,9 @@ button {
   align-content: start;
   gap: 12px;
   min-width: 0;
-  min-height: 34%;
+  min-height: 0;
   padding: clamp(18px, 4vw, 42px) clamp(70px, 8vw, 112px) 64px clamp(22px, 5vw, 64px);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0));
+  background: transparent;
   color: #ffffff;
   pointer-events: none;
 }
@@ -355,7 +362,9 @@ button {
   line-height: 1.1;
   letter-spacing: 0;
   overflow-wrap: anywhere;
-  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.42);
+  text-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.44),
+    0 8px 28px rgba(0, 0, 0, 0.36);
 }
 
 .lightbox__description {
@@ -536,6 +545,7 @@ button {
 }
 
 @media (hover: none) {
+  .slide-card__title,
   .slide-card__description,
   .slide-card__cta {
     opacity: 1;
