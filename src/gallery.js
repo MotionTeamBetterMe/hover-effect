@@ -43,6 +43,15 @@ export function getPreferredTheme({ systemPrefersDark }) {
   return systemPrefersDark ? 'dark' : 'light';
 }
 
+export function getSlideCounterLabel(currentIndex, totalSlides) {
+  if (!Number.isInteger(totalSlides) || totalSlides < 1) {
+    return '0 / 0';
+  }
+
+  const normalizedCurrent = ((currentIndex % totalSlides) + totalSlides) % totalSlides;
+  return `${normalizedCurrent + 1} / ${totalSlides}`;
+}
+
 export function initGallery(root, rawSlides) {
   const slides = normalizeSlides(rawSlides);
   const themeMediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)');
@@ -92,7 +101,7 @@ export function initGallery(root, rawSlides) {
 
     setLightboxOrigin(lightbox.overlay, trigger);
 
-    updateLightbox(lightbox, slides[state.activeIndex]);
+    updateLightbox(lightbox, slides[state.activeIndex], state.activeIndex, slides.length);
     revealLightboxContent();
     lightbox.overlay.classList.remove('is-closing');
     lightbox.overlay.setAttribute('aria-hidden', 'false');
@@ -126,7 +135,7 @@ export function initGallery(root, rawSlides) {
 
   function showAdjacentSlide(direction) {
     state.activeIndex = getAdjacentSlideIndex(state.activeIndex, direction, slides.length);
-    updateLightbox(lightbox, slides[state.activeIndex]);
+    updateLightbox(lightbox, slides[state.activeIndex], state.activeIndex, slides.length);
     revealLightboxContent();
   }
 
@@ -280,10 +289,20 @@ function createLightbox() {
   const image = document.createElement('img');
   image.className = 'lightbox__image';
   image.alt = '';
-  media.append(image);
+
+  const error = document.createElement('div');
+  error.className = 'lightbox__error';
+  error.hidden = true;
+  error.setAttribute('role', 'status');
+  error.textContent = 'Image unavailable. Run Sync Notion Slides to refresh this Notion file URL.';
+
+  media.append(image, error);
 
   const content = document.createElement('div');
   content.className = 'lightbox__content';
+
+  const counter = document.createElement('p');
+  counter.className = 'lightbox__counter';
 
   const tag = document.createElement('p');
   tag.className = 'lightbox__tag';
@@ -302,9 +321,19 @@ function createLightbox() {
   link.rel = 'noreferrer noopener';
   link.textContent = 'Open link';
 
-  content.append(tag, title, description, link);
+  content.append(counter, tag, title, description, link);
   panel.append(media, content);
   overlay.append(closeButton, previousButton, panel, nextButton);
+
+  image.addEventListener('load', () => {
+    image.hidden = false;
+    error.hidden = true;
+  });
+
+  image.addEventListener('error', () => {
+    image.hidden = true;
+    error.hidden = false;
+  });
 
   return {
     overlay,
@@ -312,6 +341,8 @@ function createLightbox() {
     previousButton,
     nextButton,
     image,
+    error,
+    counter,
     tag,
     title,
     description,
@@ -319,8 +350,12 @@ function createLightbox() {
   };
 }
 
-function updateLightbox(lightbox, slide) {
+function updateLightbox(lightbox, slide, index, totalSlides) {
+  lightbox.image.hidden = false;
+  lightbox.error.hidden = true;
   lightbox.image.src = slide.image;
+  lightbox.image.alt = slide.title;
+  lightbox.counter.textContent = getSlideCounterLabel(index, totalSlides);
   lightbox.title.textContent = slide.title;
   lightbox.description.hidden = !slide.description;
   lightbox.description.textContent = slide.description;

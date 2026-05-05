@@ -3,6 +3,7 @@ import {
   LIGHTBOX_CONTENT_HIDE_DELAY_MS,
   getAdjacentSlideIndex,
   getPreferredTheme,
+  getSlideCounterLabel,
   normalizeSlides,
 } from './gallery.js';
 
@@ -47,5 +48,11 @@ describe('gallery behavior', () => {
   it('keeps fullscreen slide titles visible briefly after interaction', () => {
     expect(LIGHTBOX_CONTENT_HIDE_DELAY_MS).toBeGreaterThanOrEqual(1000);
     expect(LIGHTBOX_CONTENT_HIDE_DELAY_MS).toBeLessThanOrEqual(2000);
+  });
+
+  it('formats the fullscreen slide counter', () => {
+    expect(getSlideCounterLabel(0, 10)).toBe('1 / 10');
+    expect(getSlideCounterLabel(9, 10)).toBe('10 / 10');
+    expect(getSlideCounterLabel(0, 0)).toBe('0 / 0');
   });
 });

@@ -319,6 +319,8 @@ button {
 .lightbox__media {
   position: absolute;
   inset: 0;
+  display: grid;
+  place-items: center;
   min-height: 100%;
   background: #171717;
 }
@@ -328,7 +330,24 @@ button {
   width: 100%;
   height: 100%;
   cursor: zoom-out;
-  object-fit: cover;
+  object-fit: contain;
+}
+
+.lightbox__error {
+  max-width: min(28rem, calc(100% - 48px));
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.lightbox__error[hidden] {
+  display: none;
 }
 
 .lightbox__content {
@@ -362,6 +381,20 @@ button {
   margin: 0;
   background: rgba(255, 255, 255, 0.18);
   color: #ffffff;
+}
+
+.lightbox__counter {
+  width: fit-content;
+  margin: 0;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.78rem;
+  font-weight: 780;
+  letter-spacing: 0;
+  line-height: 1;
+  backdrop-filter: blur(10px);
 }
 
 .lightbox__title {
