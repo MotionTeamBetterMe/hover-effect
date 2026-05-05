@@ -2,7 +2,32 @@
 
 Static responsive slide gallery for Notion `/embed`, hosted on GitHub Pages.
 
-The production widget can read slides from a private Notion database during GitHub Actions builds. The final GitHub Pages site is public so Notion can embed it, but the Notion database and API token stay private.
+Live URL:
+
+```text
+https://motionteambetterme.github.io/hover-effect/
+```
+
+## Edit Slides
+
+Slides are edited in one file:
+
+```text
+src/slides.js
+```
+
+Each slide needs only:
+
+```js
+{
+  title: 'Slide title',
+  image: 'https://example.com/image.jpg'
+}
+```
+
+Use image URLs that open without login. Notion private file URLs are not reliable for a public embed.
+
+After editing `src/slides.js`, commit to `main`. GitHub Actions deploys the updated widget automatically.
 
 ## Local Development
 
@@ -24,60 +49,18 @@ npm test
 npm run build
 ```
 
-## Notion Database Setup
+## GitHub Pages
 
-Create a Notion database named `Slides` with these properties:
-
-| Property | Type | Required |
-| --- | --- | --- |
-| `Title` | Title | Yes |
-| `Image` | URL or Files & media | Yes |
-| `Order` | Number | No |
-| `Published` | Checkbox | No |
-
-If `Published` exists and is unchecked, the slide is skipped. If `Order` exists, lower numbers appear first.
-
-## Notion Integration
-
-1. Open [Notion integrations](https://www.notion.so/my-integrations).
-2. Create an internal connection.
-3. Copy the internal integration secret.
-4. Open the `Slides` database in Notion.
-5. Use `...` -> `Connections` and add the integration to the database.
-6. Copy the database URL and extract the 32-character database ID.
-
-## GitHub Secrets
-
-Add these repository secrets:
-
-```text
-NOTION_TOKEN
-NOTION_DATABASE_ID
-```
-
-Repository secrets page:
-
-```text
-https://github.com/MotionTeamBetterMe/hover-effect/settings/secrets/actions
-```
-
-## Deployment
-
-The repo has two workflows:
+Deployment workflow:
 
 ```text
 .github/workflows/deploy.yml
-.github/workflows/sync-notion.yml
 ```
 
-`Deploy to GitHub Pages` runs on push to `main`. If Notion secrets exist, it syncs slides before build.
-
-`Sync Notion Slides` runs manually and every 15 minutes. It reads Notion, builds the site, and deploys to GitHub Pages.
-
-Live URL:
+Pages must use:
 
 ```text
-https://motionteambetterme.github.io/hover-effect/
+Settings -> Pages -> Build and deployment -> Source: GitHub Actions
 ```
 
 ## Notion Embed
