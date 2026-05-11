@@ -324,11 +324,13 @@ function createLightbox() {
   image.addEventListener('load', () => {
     image.hidden = false;
     error.hidden = true;
+    media.classList.remove('is-loading');
   });
 
   image.addEventListener('error', () => {
     image.hidden = true;
     error.hidden = false;
+    media.classList.remove('is-loading');
   });
 
   return {
@@ -336,6 +338,7 @@ function createLightbox() {
     closeButton,
     previousButton,
     nextButton,
+    media,
     image,
     error,
     counter,
@@ -347,7 +350,8 @@ function createLightbox() {
 }
 
 function updateLightbox(lightbox, slide, index, totalSlides) {
-  lightbox.image.hidden = false;
+  lightbox.media.classList.add('is-loading');
+  lightbox.image.hidden = true;
   lightbox.error.hidden = true;
   lightbox.image.src = slide.image;
   lightbox.image.alt = slide.title;
