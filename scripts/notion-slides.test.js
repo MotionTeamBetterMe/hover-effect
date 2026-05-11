@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { extractSlideFromNotionPage, sortSlidesForGallery } from './notion-slides.mjs';
+import {
+  cacheSlideImages,
+  extractSlideFromNotionPage,
+  getImageExtension,
+  sortSlidesForGallery,
+} from './notion-slides.mjs';
 
 describe('Notion slide sync', () => {
   it('extracts a published slide from Title and Image properties', () => {
@@ -93,5 +98,38 @@ describe('Notion slide sync', () => {
       { title: 'Third', image: 'https://example.com/3.jpg' },
       { title: 'No order', image: 'https://example.com/no.jpg' },
     ]);
+  });
+
+  it('detects image extensions from content type before URL path', () => {
+    expect(getImageExtension('image/png', 'https://example.com/file')).toBe('.png');
+    expect(getImageExtension('', 'https://example.com/file.webp?token=1')).toBe('.webp');
+    expect(getImageExtension('', 'https://example.com/file')).toBe('.jpg');
+  });
+
+  it('rewrites slide images to stable local files after caching', async () => {
+    const writes = new Map();
+    const slides = [
+      { title: 'First', image: 'https://example.com/one.png?token=temporary' },
+      { title: 'Second', image: 'https://example.com/two.jpg?token=temporary' },
+    ];
+
+    const cached = await cacheSlideImages(slides, {
+      outputDir: '/tmp/generated-slides',
+      publicPath: './slides',
+      fetchImpl: async () => ({
+        ok: true,
+        headers: new Map([['content-type', 'image/png']]),
+        arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+      }),
+      resetDir: async () => {},
+      ensureDir: async () => {},
+      writeFileImpl: async (path, body) => writes.set(path, body),
+    });
+
+    expect(cached).toEqual([
+      { title: 'First', image: './slides/slide-001.png' },
+      { title: 'Second', image: './slides/slide-002.png' },
+    ]);
+    expect(writes.size).toBe(2);
   });
 });

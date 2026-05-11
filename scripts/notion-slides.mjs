@@ -1,5 +1,5 @@
-import { writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const NOTION_VERSION = '2022-06-28';
@@ -42,6 +42,83 @@ export function sortSlidesForGallery(slides) {
       return leftOrder - rightOrder;
     })
     .map(({ title, image }) => ({ title, image }));
+}
+
+export function getImageExtension(contentType, imageUrl) {
+  const normalizedType = contentType?.split(';')[0]?.trim().toLowerCase();
+  const extensionByType = {
+    'image/jpeg': '.jpg',
+    'image/jpg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp',
+    'image/gif': '.gif',
+    'image/svg+xml': '.svg',
+  };
+
+  if (extensionByType[normalizedType]) {
+    return extensionByType[normalizedType];
+  }
+
+  try {
+    const extension = extname(new URL(imageUrl).pathname).toLowerCase();
+    if (['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'].includes(extension)) {
+      return extension === '.jpeg' ? '.jpg' : extension;
+    }
+  } catch {
+    // Fall back to jpeg below.
+  }
+
+  return '.jpg';
+}
+
+export async function cacheSlideImages(
+  slides,
+  {
+    outputDir,
+    publicPath = './slides',
+    fetchImpl = fetch,
+    resetDir = rm,
+    ensureDir = mkdir,
+    writeFileImpl = writeFile,
+  },
+) {
+  await resetDir(outputDir, { recursive: true, force: true });
+  await ensureDir(outputDir, { recursive: true });
+
+  const cachedSlides = [];
+
+  for (const [index, slide] of slides.entries()) {
+    const response = await fetchImpl(slide.image);
+
+    if (!response.ok) {
+      throw new Error(`Failed to download image for "${slide.title}": ${response.status}`);
+    }
+
+    const contentType = getHeader(response.headers, 'content-type');
+    const extension = getImageExtension(contentType, slide.image);
+    const filename = `slide-${String(index + 1).padStart(3, '0')}${extension}`;
+    const body = Buffer.from(await response.arrayBuffer());
+
+    await writeFileImpl(join(outputDir, filename), body);
+    cachedSlides.push({
+      ...slide,
+      image: `${publicPath}/${filename}`,
+    });
+  }
+
+  return cachedSlides;
+}
+
+function getHeader(headers, name) {
+  if (!headers) {
+    return '';
+  }
+
+  if (typeof headers.get === 'function') {
+    return headers.get(name) || '';
+  }
+
+  return headers[name] || headers[name.toLowerCase()] || '';
 }
 
 export async function fetchNotionSlides({ token, databaseId, fetchImpl = fetch }) {
@@ -140,9 +217,13 @@ async function main() {
 
   const currentFile = fileURLToPath(import.meta.url);
   const projectRoot = resolve(dirname(currentFile), '..');
-  await writeSlidesModule(slides, resolve(projectRoot, 'src/slides.js'));
-  await writeSlidesJson(slides, resolve(projectRoot, 'public/slides.json'));
-  console.log(`Synced ${slides.length} slide(s) from Notion.`);
+  const cachedSlides = await cacheSlideImages(slides, {
+    outputDir: resolve(projectRoot, 'public/slides'),
+  });
+
+  await writeSlidesModule(cachedSlides, resolve(projectRoot, 'src/slides.js'));
+  await writeSlidesJson(cachedSlides, resolve(projectRoot, 'public/slides.json'));
+  console.log(`Synced ${cachedSlides.length} slide(s) from Notion and cached images.`);
 }
 
 export async function writeSlidesJson(slides, outputPath) {
