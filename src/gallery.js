@@ -241,17 +241,12 @@ function createSlideCard(slide, index, onOpen) {
   description.className = 'slide-card__description';
   description.textContent = slide.description;
 
-  const cta = document.createElement('span');
-  cta.className = 'slide-card__cta';
-  cta.textContent = 'View slide';
-
   body.append(title);
 
   if (slide.description) {
     body.append(description);
   }
 
-  body.append(cta);
   button.append(media, body);
   button.addEventListener('click', () => onOpen(index, button));
 

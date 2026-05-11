@@ -239,31 +239,9 @@ button {
     transform 180ms ease;
 }
 
-.slide-card__cta {
-  display: inline-flex;
-  width: fit-content;
-  max-width: 100%;
-  align-items: center;
-  min-height: 2.05rem;
-  padding: 0 11px;
-  border-radius: 999px;
-  background: var(--title-bg);
-  color: var(--title-color);
-  font-size: 0.84rem;
-  font-weight: 750;
-  line-height: 1;
-  opacity: 0;
-  transform: translateY(8px);
-  transition:
-    opacity 180ms ease,
-    transform 180ms ease;
-}
-
 .slide-card:hover .slide-card__description,
-.slide-card:hover .slide-card__cta,
 .slide-card:hover .slide-card__title,
 .slide-card:focus-visible .slide-card__description,
-.slide-card:focus-visible .slide-card__cta,
 .slide-card:focus-visible .slide-card__title {
   opacity: 1;
   transform: translateY(0);
@@ -306,7 +284,8 @@ button {
 
 .lightbox__panel {
   position: relative;
-  display: block;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
   width: 100%;
   height: 100dvh;
@@ -317,10 +296,10 @@ button {
 }
 
 .lightbox__media {
-  position: absolute;
-  inset: 0;
+  position: relative;
   display: grid;
   place-items: center;
+  min-width: 0;
   min-height: 100%;
   background: #171717;
 }
@@ -351,18 +330,15 @@ button {
 }
 
 .lightbox__content {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
+  position: relative;
   z-index: 2;
-  display: grid;
-  align-content: start;
-  gap: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
-  min-height: 0;
-  padding: clamp(18px, 4vw, 42px) clamp(70px, 8vw, 112px) 64px clamp(22px, 5vw, 64px);
-  background: transparent;
+  min-height: 4.25rem;
+  padding: 12px 76px 12px clamp(18px, 4vw, 42px);
+  background: #101214;
   color: #ffffff;
   opacity: 0;
   pointer-events: none;
@@ -384,6 +360,7 @@ button {
 }
 
 .lightbox__counter {
+  flex: 0 0 auto;
   width: fit-content;
   margin: 0;
   padding: 6px 9px;
@@ -399,10 +376,11 @@ button {
 
 .lightbox__title {
   margin: 0;
-  max-width: min(760px, 100%);
+  min-width: 0;
+  max-width: 100%;
   color: #ffffff;
-  font-size: clamp(1.7rem, 4vw, 3.8rem);
-  line-height: 1.1;
+  font-size: clamp(1rem, 2vw, 1.45rem);
+  line-height: 1.18;
   letter-spacing: 0;
   overflow-wrap: anywhere;
   text-shadow:
@@ -563,9 +541,15 @@ button {
   }
 
   .lightbox__content {
-    align-content: start;
-    min-height: 42%;
-    padding: 22px 74px 62px 22px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 4.75rem;
+    padding: 14px 70px 14px 18px;
+  }
+
+  .lightbox__title {
+    font-size: 1rem;
   }
 
   .lightbox__nav {
@@ -589,8 +573,7 @@ button {
 
 @media (hover: none) {
   .slide-card__title,
-  .slide-card__description,
-  .slide-card__cta {
+  .slide-card__description {
     opacity: 1;
     transform: none;
   }
