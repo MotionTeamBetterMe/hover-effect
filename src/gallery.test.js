@@ -28,6 +28,7 @@ describe('gallery behavior', () => {
         title: 'Strategy',
         description: '',
         image: '/slides/strategy.jpg',
+        thumbnail: '',
         tag: '',
         link: '',
       },

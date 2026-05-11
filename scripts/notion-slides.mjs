@@ -1,8 +1,20 @@
+import { createHash } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
-import { dirname, extname, join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
 
 const NOTION_VERSION = '2022-06-28';
+const IMAGE_VARIANTS = {
+  full: {
+    width: 1920,
+    quality: 90,
+  },
+  thumb: {
+    width: 760,
+    quality: 82,
+  },
+};
 
 export function extractSlideFromNotionPage(page) {
   const properties = page?.properties || {};
@@ -41,34 +53,28 @@ export function sortSlidesForGallery(slides) {
 
       return leftOrder - rightOrder;
     })
-    .map(({ title, image }) => ({ title, image }));
+    .map(({ title, image, thumbnail }) => ({
+      title,
+      image,
+      ...(thumbnail ? { thumbnail } : {}),
+    }));
 }
 
-export function getImageExtension(contentType, imageUrl) {
-  const normalizedType = contentType?.split(';')[0]?.trim().toLowerCase();
-  const extensionByType = {
-    'image/jpeg': '.jpg',
-    'image/jpg': '.jpg',
-    'image/png': '.png',
-    'image/webp': '.webp',
-    'image/gif': '.gif',
-    'image/svg+xml': '.svg',
-  };
+export async function optimizeSlideImage(body, variant) {
+  const settings = IMAGE_VARIANTS[variant] || IMAGE_VARIANTS.full;
 
-  if (extensionByType[normalizedType]) {
-    return extensionByType[normalizedType];
-  }
-
-  try {
-    const extension = extname(new URL(imageUrl).pathname).toLowerCase();
-    if (['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'].includes(extension)) {
-      return extension === '.jpeg' ? '.jpg' : extension;
-    }
-  } catch {
-    // Fall back to jpeg below.
-  }
-
-  return '.jpg';
+  return sharp(body)
+    .rotate()
+    .resize({
+      width: settings.width,
+      withoutEnlargement: true,
+    })
+    .webp({
+      quality: settings.quality,
+      effort: 5,
+      smartSubsample: true,
+    })
+    .toBuffer();
 }
 
 export async function cacheSlideImages(
@@ -77,6 +83,7 @@ export async function cacheSlideImages(
     outputDir,
     publicPath = './slides',
     fetchImpl = fetch,
+    optimizeImage = optimizeSlideImage,
     resetDir = rm,
     ensureDir = mkdir,
     writeFileImpl = writeFile,
@@ -94,31 +101,24 @@ export async function cacheSlideImages(
       throw new Error(`Failed to download image for "${slide.title}": ${response.status}`);
     }
 
-    const contentType = getHeader(response.headers, 'content-type');
-    const extension = getImageExtension(contentType, slide.image);
-    const filename = `slide-${String(index + 1).padStart(3, '0')}${extension}`;
-    const body = Buffer.from(await response.arrayBuffer());
+    const sourceBody = Buffer.from(await response.arrayBuffer());
+    const hash = createHash('sha256').update(sourceBody).digest('hex').slice(0, 10);
+    const slideNumber = String(index + 1).padStart(3, '0');
+    const filename = `slide-${slideNumber}-${hash}.webp`;
+    const thumbnailFilename = `slide-${slideNumber}-${hash}-thumb.webp`;
+    const fullBody = await optimizeImage(sourceBody, 'full');
+    const thumbnailBody = await optimizeImage(sourceBody, 'thumb');
 
-    await writeFileImpl(join(outputDir, filename), body);
+    await writeFileImpl(join(outputDir, filename), fullBody);
+    await writeFileImpl(join(outputDir, thumbnailFilename), thumbnailBody);
     cachedSlides.push({
       ...slide,
       image: `${publicPath}/${filename}`,
+      thumbnail: `${publicPath}/${thumbnailFilename}`,
     });
   }
 
   return cachedSlides;
-}
-
-function getHeader(headers, name) {
-  if (!headers) {
-    return '';
-  }
-
-  if (typeof headers.get === 'function') {
-    return headers.get(name) || '';
-  }
-
-  return headers[name] || headers[name.toLowerCase()] || '';
 }
 
 export async function fetchNotionSlides({ token, databaseId, fetchImpl = fetch }) {

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   cacheSlideImages,
   extractSlideFromNotionPage,
-  getImageExtension,
   sortSlidesForGallery,
 } from './notion-slides.mjs';
 
@@ -100,13 +99,7 @@ describe('Notion slide sync', () => {
     ]);
   });
 
-  it('detects image extensions from content type before URL path', () => {
-    expect(getImageExtension('image/png', 'https://example.com/file')).toBe('.png');
-    expect(getImageExtension('', 'https://example.com/file.webp?token=1')).toBe('.webp');
-    expect(getImageExtension('', 'https://example.com/file')).toBe('.jpg');
-  });
-
-  it('rewrites slide images to stable local files after caching', async () => {
+  it('rewrites slide images to optimized stable local WebP files after caching', async () => {
     const writes = new Map();
     const slides = [
       { title: 'First', image: 'https://example.com/one.png?token=temporary' },
@@ -121,15 +114,26 @@ describe('Notion slide sync', () => {
         headers: new Map([['content-type', 'image/png']]),
         arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
       }),
+      optimizeImage: async (body, variant) => Buffer.from(`${variant}:${body.length}`),
       resetDir: async () => {},
       ensureDir: async () => {},
       writeFileImpl: async (path, body) => writes.set(path, body),
     });
 
-    expect(cached).toEqual([
-      { title: 'First', image: './slides/slide-001.png' },
-      { title: 'Second', image: './slides/slide-002.png' },
-    ]);
-    expect(writes.size).toBe(2);
+    expect(cached).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: 'First',
+          image: expect.stringMatching(/^\.\/slides\/slide-001-[a-f0-9]{10}\.webp$/),
+          thumbnail: expect.stringMatching(/^\.\/slides\/slide-001-[a-f0-9]{10}-thumb\.webp$/),
+        }),
+        expect.objectContaining({
+          title: 'Second',
+          image: expect.stringMatching(/^\.\/slides\/slide-002-[a-f0-9]{10}\.webp$/),
+          thumbnail: expect.stringMatching(/^\.\/slides\/slide-002-[a-f0-9]{10}-thumb\.webp$/),
+        }),
+      ]),
+    );
+    expect(writes.size).toBe(4);
   });
 });

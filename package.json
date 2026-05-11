@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "sharp": "^0.34.5",
     "vite": "^8.0.10",
     "vitest": "^4.1.5"
   }

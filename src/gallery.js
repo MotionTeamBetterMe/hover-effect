@@ -33,6 +33,7 @@ export function normalizeSlides(rawSlides) {
       title,
       description: hasText(slide.description) ? slide.description.trim() : '',
       image: slide.image.trim(),
+      thumbnail: hasText(slide.thumbnail) ? slide.thumbnail.trim() : '',
       tag: hasText(slide.tag) ? slide.tag.trim() : '',
       link: hasText(slide.link) ? slide.link.trim() : '',
     };
@@ -213,7 +214,7 @@ function createSlideCard(slide, index, onOpen) {
   media.className = 'slide-card__media';
 
   const image = document.createElement('img');
-  image.src = slide.image;
+  image.src = slide.thumbnail || slide.image;
   image.alt = '';
   image.loading = 'lazy';
   image.decoding = 'async';
